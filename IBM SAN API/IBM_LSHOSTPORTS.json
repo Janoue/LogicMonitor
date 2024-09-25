@@ -1,0 +1,76 @@
+{
+  "collectionMethod": "batchscript",
+  "datapoints": [
+    {
+      "max": "3",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "0 = Online,\n1 = Inactive,\n2 = Offline,\n3 = Unknown",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "##WILDVALUE##.state",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "Bqfmu9PPR5q7XKMKGA0FvA",
+      "useValue": "output",
+      "min": "0",
+      "name": "State",
+      "noData": "Do not trigger an alert"
+    }
+  ],
+  "searchKeywords": "",
+  "displayedAs": "IBM Host Ports",
+  "description": "",
+  "appliesTo": "exists(\"ibm_api.user\") && exists(\"ibm_api.pass\")",
+  "activeDiscovery": {
+    "groupExpr": "auto.ibm.host_name",
+    "deleteInactiveInstances": false,
+    "groupMethod": "ilp",
+    "discoveryMethod": "ad_script",
+    "autoDeleteInstances": false,
+    "disableDiscoveredInstances": false,
+    "filters": [],
+    "params": {
+      "type": "groovy",
+      "content": "import org.apache.http.HttpEntity\r\nimport org.apache.http.HttpHeaders\r\nimport org.apache.http.HttpResponse\r\nimport org.apache.http.client.methods.HttpPost\r\nimport org.apache.http.conn.ssl.NoopHostnameVerifier\r\nimport org.apache.http.conn.ssl.SSLConnectionSocketFactory\r\nimport org.apache.http.impl.client.CloseableHttpClient\r\nimport org.apache.http.impl.client.HttpClients\r\nimport org.apache.http.util.EntityUtils\r\nimport groovy.json.JsonSlurper\r\nimport javax.net.ssl.SSLContext\r\nimport javax.net.ssl.TrustManager\r\nimport javax.net.ssl.X509TrustManager\r\nimport java.security.cert.X509Certificate\r\nimport com.santaba.agent.util.script.ScriptCache\r\n\r\n// Variables\r\ndef hostname = hostProps.get(\"system.hostname\")\r\ndef apiEndpoint = \"https://${hostname}:7443/rest/v1/lshostports\"\r\n\r\ndef cache = ScriptCache.getCache()\r\ndef key = \"IBMAuth.${hostname}.ClientSecret\"\r\ndef token = cache.get(key)\r\n\r\n// Create a custom SSL context that skips certificate validation\r\ndef trustAllCerts = [\r\n    new X509TrustManager() {\r\n        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {}\r\n        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {}\r\n        public X509Certificate[] getAcceptedIssuers() { null }\r\n    }\r\n] as TrustManager[]\r\n\r\ndef sslContext = SSLContext.getInstance(\"TLS\")\r\nsslContext.init(null, trustAllCerts, null)\r\n\r\n// Create a socket factory with a bypassed hostname verification\r\ndef socketFactory = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)\r\n\r\n// Create an HTTP client with the custom SSL context and socket factory\r\ndef httpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build()\r\n\r\n\r\n// Create an HTTP GET request to retrieve system status\r\ndef httpPost = new HttpPost(apiEndpoint)\r\n\r\n// Set Headers\r\nhttpPost.setHeader(\"Content-Type\", \"application/json\")\r\nhttpPost.setHeader(\"X-Auth-Token\", \"${token}\")\r\n\r\n    \r\ntry {\r\n    // Execute the request and retrieve the response\r\n    def response = httpClient.execute(httpPost)\r\n    \r\n    // Extract the response entity\r\n    def entity = response.getEntity()\r\n    \r\n    // Check if the request was successful (status code 200)\r\n    if (response.getStatusLine().getStatusCode() == 200) {\r\n        // Parse the response entity as JSON\r\n        \r\n        def responseBody = EntityUtils.toString(entity)\r\n        def jsonSlurper = new JsonSlurper()\r\n        def data = jsonSlurper.parseText(responseBody)\r\n        \r\n        \r\n        data.each { properties ->\r\n\r\n            def propertyMap = [:]\r\n            properties.each { name, value ->\r\n                propertyMap[\"${name}\"] = \"${value}\"\r\n            }\r\n            def joinedProperties = propertyMap.collect { propName, propValue -> \"auto.IBM.${propName}=${propValue}\" }.join(\"&\")\r\n            println(\"${propertyMap.SAS_WWPN}##${propertyMap.SAS_WWPN}######${joinedProperties}\")\r\n            println(\"${propertyMap.WWPN}##${propertyMap.WWPN}######${joinedProperties}\")\r\n        }\r\n        \r\n    } else {\r\n        // Print the error message if the request was not successful\r\n        println(\"Error Code##Request failed with status code: ${response.getStatusLine().getStatusCode()}\")\r\n        println(\"Error Message##${EntityUtils.toString(entity)}\")\r\n    }\r\n} finally {\r\n    // Close the HTTP client and release any system resources\r\n    httpClient.close()\r\n}\r\nreturn 0"
+    },
+    "discoveryInterval": "0m",
+    "enabled": true,
+    "showDeletedInstanceDays": 0
+  },
+  "collectionAttrs": {
+    "type": "groovy",
+    "content": "import org.apache.http.HttpEntity\r\nimport org.apache.http.HttpHeaders\r\nimport org.apache.http.HttpResponse\r\nimport org.apache.http.client.methods.HttpPost\r\nimport org.apache.http.conn.ssl.NoopHostnameVerifier\r\nimport org.apache.http.conn.ssl.SSLConnectionSocketFactory\r\nimport org.apache.http.impl.client.CloseableHttpClient\r\nimport org.apache.http.impl.client.HttpClients\r\nimport org.apache.http.util.EntityUtils\r\nimport groovy.json.JsonSlurper\r\nimport javax.net.ssl.SSLContext\r\nimport javax.net.ssl.TrustManager\r\nimport javax.net.ssl.X509TrustManager\r\nimport java.security.cert.X509Certificate\r\nimport com.santaba.agent.util.script.ScriptCache\r\n\r\n// Variables\r\ndef hostname = hostProps.get(\"system.hostname\")\r\ndef apiEndpoint = \"https://${hostname}:7443/rest/v1/lshostports\"\r\n\r\ndef cache = ScriptCache.getCache()\r\ndef key = \"IBMAuth.${hostname}.ClientSecret\"\r\ndef token = cache.get(key)\r\n\r\n// Create a custom SSL context that skips certificate validation\r\ndef trustAllCerts = [\r\n    new X509TrustManager() {\r\n        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {}\r\n        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {}\r\n        public X509Certificate[] getAcceptedIssuers() { null }\r\n    }\r\n] as TrustManager[]\r\n\r\ndef sslContext = SSLContext.getInstance(\"TLS\")\r\nsslContext.init(null, trustAllCerts, null)\r\n\r\n// Create a socket factory with a bypassed hostname verification\r\ndef socketFactory = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)\r\n\r\n// Create an HTTP client with the custom SSL context and socket factory\r\ndef httpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build()\r\n\r\n\r\n// Create an HTTP GET request to retrieve system status\r\ndef httpPost = new HttpPost(apiEndpoint)\r\n\r\n// Set Headers\r\nhttpPost.setHeader(\"Content-Type\", \"application/json\")\r\nhttpPost.setHeader(\"X-Auth-Token\", \"${token}\")\r\n\r\n    \r\ntry {\r\n    // Execute the request and retrieve the response\r\n    def response = httpClient.execute(httpPost)\r\n    \r\n    // Extract the response entity\r\n    def entity = response.getEntity()\r\n    \r\n    // Check if the request was successful (status code 200)\r\n    if (response.getStatusLine().getStatusCode() == 200) {\r\n        // Parse the response entity as JSON\r\n        def responseBody = EntityUtils.toString(entity)\r\n        def jsonSlurper = new JsonSlurper()\r\n        def data = jsonSlurper.parseText(responseBody)\r\n          \r\n        data.each { member ->\r\n            member.each { name, value ->\r\n                if (name == \"state\") {\r\n                    switch (value) {\r\n                        case \"active\":\r\n                            println(\"${member.SAS_WWPN}.${name}=0\")\r\n                            println(\"${member.WWPN}.${name}=0\")\r\n                            break\r\n                        case \"inactive\":\r\n                            println(\"${member.SAS_WWPN}.${name}=1\")\r\n                            println(\"${member.WWPN}.${name}=1\")\r\n                            break\r\n                        case \"offline\":\r\n                            println(\"${member.SAS_WWPN}.${name}=2\")\r\n                            println(\"${member.WWPN}.${name}=2\")\r\n                            break\r\n                        default:\r\n                            println(\"${member.SAS_WWPN}.${name}=3\")\r\n                            println(\"${member.WWPN}.${name}=3\")\r\n                    }\r\n                } else {\r\n                    println(\"${member.SAS_WWPN}.${name}=${value}\")\r\n                    println(\"${member.WWPN}.${name}=${value}\")\r\n                }\r\n            }\r\n        }\r\n        \r\n    } else {\r\n        // Print the error message if the request was not successful\r\n        println(\"Request failed with status code: ${response.getStatusLine().getStatusCode()}\")\r\n        println(\"Error message: ${EntityUtils.toString(entity)}\")\r\n    }\r\n} finally {\r\n    // Close the HTTP client and release any system resources\r\n    httpClient.close()\r\n}\r\nreturn 0"
+  },
+  "type": 0,
+  "technicalNotes": "",
+  "useWildValueAsUniqueIdentifier": false,
+  "version": 1718194672,
+  "registryMetadata": {
+    "currentUuid": "9fmXUQdTQk6rNFKTJVm2zg",
+    "originalUuid": "9fmXUQdTQk6rNFKTJVm2zg",
+    "locatorId": "",
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "registryVersion": "1.0.0",
+    "checksum": "3e4c75fa5eb24b02a7fc1e12552e4e39",
+    "namespace": "",
+    "registryId": ""
+  },
+  "multiInstance": true,
+  "name": "IBM_LSHOSTPORTS",
+  "collectionInterval": "5m",
+  "dataSourceType": 1,
+  "group": "",
+  "headers": {
+    "cache-control": "no-cache, no-store",
+    "content-disposition": "attachment; filename=\"IBM_LSHOSTPORTS.json\"",
+    "content-encoding": "gzip",
+    "content-type": "application/json",
+    "date": "Wed, 25 Sep 2024 13:01:10 GMT",
+    "server": "LM",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "accept-encoding",
+    "x-content-type-options": "nosniff",
+    "x-server-version": "210-8"
+  }
+}

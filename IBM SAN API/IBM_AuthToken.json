@@ -1,0 +1,74 @@
+{
+  "collectionMethod": "script",
+  "datapoints": [
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "interpretExpr": "TokenCached",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "GTIls9ixTUqhhYM52-EU2g",
+      "useValue": "output",
+      "min": "",
+      "name": "TokenCached",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "interpretExpr": "TokenObtained",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "vmx4DU0mTGSQao6hsyGY5A",
+      "useValue": "output",
+      "min": "",
+      "name": "TokenObtained",
+      "noData": "Do not trigger an alert"
+    }
+  ],
+  "searchKeywords": "",
+  "displayedAs": "IBM Auth Token",
+  "description": "",
+  "appliesTo": "exists(\"ibm_api.user\") && exists(\"ibm_api.pass\")",
+  "collectionAttrs": {
+    "type": "groovy",
+    "content": "import org.apache.http.HttpEntity\r\nimport org.apache.http.HttpHeaders\r\nimport org.apache.http.entity.StringEntity\r\nimport org.apache.http.HttpResponse\r\nimport org.apache.http.client.methods.HttpPost\r\nimport org.apache.http.client.methods.HttpGet\r\nimport org.apache.http.client.methods.HttpPatch\r\nimport org.apache.http.conn.ssl.NoopHostnameVerifier\r\nimport org.apache.http.conn.ssl.SSLConnectionSocketFactory\r\nimport org.apache.http.impl.client.CloseableHttpClient\r\nimport org.apache.http.impl.client.HttpClients\r\nimport org.apache.http.util.EntityUtils\r\nimport groovy.json.JsonSlurper\r\nimport groovy.json.JsonOutput\r\nimport javax.net.ssl.SSLContext\r\nimport javax.net.ssl.TrustManager\r\nimport javax.net.ssl.X509TrustManager\r\nimport java.security.cert.X509Certificate\r\nimport com.santaba.agent.util.script.ScriptCache\r\n\r\n\r\n// Example usage\r\ndef hostname = hostProps.get(\"system.hostname\")\r\ndef apiEndpoint = \"https://${hostname}:7443/rest/v1/auth\"\r\ndef user = hostProps.get(\"ibm_api.user\")\r\ndef pass = hostProps.get(\"ibm_api.pass\")\r\ndef headers = [\r\n    \"Content-Type\": \"application/json\",\r\n    \"X-Auth-Username\": \"${user}\",\r\n    \"X-Auth-Password\": \"${pass}\"\r\n    // Add more headers if needed\r\n]\r\n\r\ndef cache = ScriptCache.getCache()\r\ndef newToken = false;\r\ndef key = \"IBMAuth.${hostname}.ClientSecret\"\r\ndef token = cache.get(key)\r\n\r\nif (!token) {\r\n    // Retrieve token using POST method\r\n    def response = executeHttpRequest(apiEndpoint, \"POST\", headers, null)\r\n    if (response) {\r\n        token = response.token\r\n        cache.set(key, token)\r\n        newToken = true\r\n    }\r\n}\r\n\r\nprintln \"TokenCached=${token ? 1 : 0}\"\r\nprintln \"TokenObtained=${newToken ? 1 : 0}\"\r\n\r\ndef executeHttpRequest(apiEndpoint, method, headers = [:], requestBody = null) {\r\n    def httpClient = null\r\n    try {\r\n        // Create a custom SSL context that skips certificate validation\r\n        def trustAllCerts = [\r\n            new X509TrustManager() {\r\n                public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {}\r\n                public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {}\r\n                public X509Certificate[] getAcceptedIssuers() { null }\r\n            }\r\n        ] as TrustManager[]\r\n\r\n        def sslContext = SSLContext.getInstance(\"TLS\")\r\n        sslContext.init(null, trustAllCerts, null)\r\n\r\n        // Create a socket factory with a bypassed hostname verification\r\n        def socketFactory = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)\r\n\r\n        // Create an HTTP client with the custom SSL context and socket factory\r\n        httpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build()\r\n\r\n        // Create the appropriate HTTP request method\r\n        def httpRequest = null\r\n        switch (method.toUpperCase()) {\r\n            case \"GET\":\r\n                httpRequest = new HttpGet(apiEndpoint)\r\n                break\r\n            case \"POST\":\r\n                httpRequest = new HttpPost(apiEndpoint)\r\n                break\r\n            case \"PATCH\":\r\n                httpRequest = new HttpPatch(apiEndpoint)\r\n                break\r\n            default:\r\n                println(\"Unsupported HTTP method: ${method}\")\r\n                return null\r\n        }\r\n\r\n        // Set Headers\r\n        headers.each { key, value ->\r\n            httpRequest.setHeader(key, value)\r\n        }\r\n\r\n        // Set the request body if provided\r\n        if (requestBody != null) {\r\n            httpRequest.setEntity(new StringEntity(requestBody, \"UTF-8\"))\r\n        }\r\n\r\n        // Execute the request and retrieve the response\r\n        def response = httpClient.execute(httpRequest)\r\n\r\n        // Extract the response entity\r\n        def entity = response.getEntity()\r\n\r\n        // Check if the request was successful (status code 200)\r\n        if (response.getStatusLine().getStatusCode() == 200) {\r\n            // Parse the response entity as JSON\r\n            def responseBody = EntityUtils.toString(entity)\r\n            def jsonSlurper = new JsonSlurper()\r\n            return jsonSlurper.parseText(responseBody)\r\n        } else {\r\n            // Print the error message if the request was not successful\r\n            println(\"Request failed with status code: ${response.getStatusLine().getStatusCode()}\")\r\n            println(\"Error message: ${EntityUtils.toString(entity)}\")\r\n            return null\r\n        }\r\n    } finally {\r\n        // Close the HTTP client and release any system resources\r\n        if (httpClient != null) {\r\n            httpClient.close()\r\n        }\r\n    }\r\n}\r\n\r\nreturn 0"
+  },
+  "type": 0,
+  "technicalNotes": "",
+  "useWildValueAsUniqueIdentifier": false,
+  "version": 1718138110,
+  "registryMetadata": {
+    "currentUuid": "WqW700qPSjKY8t6LD84QbQ",
+    "originalUuid": "WqW700qPSjKY8t6LD84QbQ",
+    "locatorId": "",
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "registryVersion": "1.0.0",
+    "checksum": "8e1d2370df66c98a062ab132411d2806",
+    "namespace": "",
+    "registryId": ""
+  },
+  "multiInstance": false,
+  "name": "IBM_AuthToken",
+  "collectionInterval": "1m",
+  "dataSourceType": 1,
+  "group": "",
+  "headers": {
+    "cache-control": "no-cache, no-store",
+    "content-disposition": "attachment; filename=\"IBM_AuthToken.json\"",
+    "content-encoding": "gzip",
+    "content-type": "application/json",
+    "date": "Wed, 25 Sep 2024 12:59:51 GMT",
+    "server": "LM",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "accept-encoding",
+    "x-content-type-options": "nosniff",
+    "x-server-version": "210-8"
+  }
+}
