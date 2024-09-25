@@ -1,0 +1,381 @@
+{
+  "collectionMethod": "script",
+  "datapoints": [
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Deployed VM quota",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "deployedVMQuota",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "sc2T3S1ZRPyWPRzTSTn7Hw",
+      "useValue": "output",
+      "min": "0",
+      "name": "deployedVMQuota",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Number of catalogs",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfCatalogs",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "wNWXLCYGRgi1HQBobC7j8w",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfCatalogs",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Number of disks",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfDisks",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "_OXfu7VdQYybyeLKYhZnRA",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfDisks",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Number of groups",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfGroups",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "HUeL7iiPR-u7rQpJ9gNjNw",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfGroups",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Number of currently running VMs",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfRunningVMs",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "4PB518aiQc271_JVuD5T4w",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfRunningVMs",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Number of vApps",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfVApps",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "XTWy0e3rTR-d2rb56VPmtA",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfVApps",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "interpretExpr": "numberOfVdcs",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "HyDmduL5SQWMYigMrk803A",
+      "useValue": "output",
+      "min": "0",
+      "name": "numberOfVdcs",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 5,
+      "dataType": 7,
+      "maxDigits": 4,
+      "description": "Stored VM Quota",
+      "interpretMethod": "namevalue",
+      "interpretExpr": "storedVMQuota",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "0pHHwtbkTrqrDS-dgWgVzA",
+      "useValue": "output",
+      "min": "0",
+      "name": "storedVMQuota",
+      "noData": "Do not trigger an alert"
+    }
+  ],
+  "searchKeywords": "",
+  "displayedAs": "vCloud :: Organizations",
+  "description": "Metrics for the vCloud Organizations",
+  "appliesTo": "hasCategory(\"vCloud\") && REST.user",
+  "activeDiscovery": {
+    "deleteInactiveInstances": false,
+    "groupMethod": "none",
+    "discoveryMethod": "ad_script",
+    "autoDeleteInstances": false,
+    "disableDiscoveredInstances": false,
+    "filters": [],
+    "params": {
+      "type": "groovy",
+      "content": "import com.santaba.agent.groovyapi.http.*;\nimport javax.xml.parsers.*;\nimport com.santaba.agent.util.script.ScriptCache\n\ndef host = hostProps.get(\"system.hostname\");\ndef user = hostProps.get(\"rest.user\");\ndef pass = hostProps.get(\"rest.pass\");\n\ndef cache = ScriptCache.getCache()\ndef key = \"vCloudAuth.ClientSecret\"\ndef token = cache.get(key)\n\nconn = \"https://${host}/api/query?type=organization\".toURL().openConnection();\n\nconn.setRequestMethod(\"GET\");\nconn.setRequestProperty(\"x-vcloud-authorization\", \"${token}\");\nconn.setRequestProperty(\"Accept\", \"application/*;version=37.0\");\n\nif(conn.responseCode == 200)\n{\n\ttext = conn.content.text.readLines().tail().join('')\n\t//println(text);\n\n\tdef queryResultRecords = new XmlSlurper().parseText(text)\n\n\tqueryResultRecords.OrgRecord.each\n\t{\n\t   println \"${it.@displayName}##${it.@displayName}\";\n\t}\n}\nelse\n{\n\tprintln(\"${conn.responseCode}: ${conn.responseMessage}\");\n}\n\nreturn 0;"
+    },
+    "discoveryInterval": "1440m",
+    "enabled": true,
+    "showDeletedInstanceDays": 0
+  },
+  "collectionAttrs": {
+    "type": "groovy",
+    "content": "import com.santaba.agent.groovyapi.http.*;\nimport javax.xml.parsers.*;\nimport com.santaba.agent.util.script.ScriptCache\n\ndef host = hostProps.get(\"system.hostname\");\ndef user = hostProps.get(\"rest.user\");\ndef pass = hostProps.get(\"rest.pass\");\n\ndef cache = ScriptCache.getCache()\ndef key = \"vCloudAuth.ClientSecret\"\ndef token = cache.get(key)\n\nconn = \"https://${host}/api/query?type=organization\".toURL().openConnection();\n\nconn.setRequestMethod(\"GET\");\nconn.setRequestProperty(\"x-vcloud-authorization\", \"${token}\");\nconn.setRequestProperty(\"Accept\", \"application/*;version=37.0\");\n\nif(conn.responseCode == 200)\n{\n\ttext = conn.content.text.readLines().tail().join('')\n\t//println(text);\n\n\tdef queryResultRecords = new XmlSlurper().parseText(text)\n\n\tqueryResultRecords.OrgRecord.each\n\t{\n\t\tif(it.@displayName == \"##WILDVALUE##\")\n\t\t{ \n\t\t\tit.attributes().each\n\t\t\t{\n\t\t\t\tname, value->\n\t\t\t\tif(value.isNumber())\n\t\t\t\t{\n\t\t\t\t\tprintln(\"${name}=${value}\");\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\nelse\n{\n\tprintln(\"${conn.responseCode}: ${conn.responseMessage}\");\n}\n\nreturn 0;"
+  },
+  "type": 0,
+  "technicalNotes": "",
+  "useWildValueAsUniqueIdentifier": false,
+  "version": 1723149512,
+  "registryMetadata": {
+    "currentUuid": "WSNEgMeSRq-lG1uMlsJwsA",
+    "originalUuid": "WSNEgMeSRq-lG1uMlsJwsA",
+    "locatorId": "",
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "registryVersion": "1.0.0",
+    "checksum": "1cfc3c04968a7d3fbd4c2b2eb7048b82",
+    "namespace": "",
+    "registryId": ""
+  },
+  "multiInstance": true,
+  "graphs": [
+    {
+      "datapoints": [
+        {
+          "datapointName": "numberOfCatalogs",
+          "consolidationFn": "average",
+          "name": "numberOfCatalogs"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "Catalogs",
+      "verticalLabel": "#",
+      "displayPriority": 2,
+      "scale1024": false,
+      "title": "Catalogs",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "numberOfCatalogs",
+          "color": "blue",
+          "legend": "Catalogs",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    },
+    {
+      "datapoints": [
+        {
+          "datapointName": "numberOfDisks",
+          "consolidationFn": "average",
+          "name": "numberOfDisks"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "Disks",
+      "verticalLabel": "#",
+      "displayPriority": 2,
+      "scale1024": false,
+      "title": "Disks",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "numberOfDisks",
+          "color": "blue",
+          "legend": "Disks",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    },
+    {
+      "datapoints": [
+        {
+          "datapointName": "numberOfGroups",
+          "consolidationFn": "average",
+          "name": "numberOfGroups"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "Groups",
+      "verticalLabel": "#",
+      "displayPriority": 2,
+      "scale1024": false,
+      "title": "Groups",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "numberOfGroups",
+          "color": "blue",
+          "legend": "Groups",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    },
+    {
+      "datapoints": [
+        {
+          "datapointName": "numberOfVApps",
+          "consolidationFn": "average",
+          "name": "numberOfVApps"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "VApps",
+      "verticalLabel": "#",
+      "displayPriority": 2,
+      "scale1024": false,
+      "title": "VApps",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "numberOfVApps",
+          "color": "blue",
+          "legend": "VApps",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    },
+    {
+      "datapoints": [
+        {
+          "datapointName": "numberOfVdcs",
+          "consolidationFn": "average",
+          "name": "numberOfVdcs"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "VDCs",
+      "verticalLabel": "#",
+      "displayPriority": 2,
+      "scale1024": false,
+      "title": "VDCs",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "numberOfVdcs",
+          "color": "blue",
+          "legend": "VDCs",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    },
+    {
+      "datapoints": [
+        {
+          "datapointName": "deployedVMQuota",
+          "consolidationFn": "average",
+          "name": "deployedVMQuota"
+        },
+        {
+          "datapointName": "numberOfRunningVMs",
+          "consolidationFn": "average",
+          "name": "numberOfRunningVMs"
+        },
+        {
+          "datapointName": "storedVMQuota",
+          "consolidationFn": "average",
+          "name": "storedVMQuota"
+        }
+      ],
+      "min": 0,
+      "timeScale": "1day",
+      "name": "Virtual Machines",
+      "verticalLabel": "#",
+      "displayPriority": 1,
+      "scale1024": false,
+      "title": "Virtual Machines",
+      "rigid": false,
+      "lines": [
+        {
+          "datapointName": "deployedVMQuota",
+          "color": "aqua",
+          "legend": "Deployed Quota",
+          "isVirtual": false,
+          "type": "line"
+        },
+        {
+          "datapointName": "numberOfRunningVMs",
+          "color": "lime",
+          "legend": "Running",
+          "isVirtual": false,
+          "type": "area"
+        },
+        {
+          "datapointName": "storedVMQuota",
+          "color": "fuchsia",
+          "legend": "Stored Quota",
+          "isVirtual": false,
+          "type": "line"
+        }
+      ]
+    }
+  ],
+  "integrationMetadata": {
+    "publishedAtMS": 1724096118459,
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "namespace": "nextdimension",
+    "registryVersion": "1.0.0",
+    "name": "",
+    "checksum": "1cfc3c04968a7d3fbd4c2b2eb7048b82",
+    "registryId": "abc62096-e537-4216-92a3-6c1c8df601ab",
+    "isPrivate": false,
+    "locator": "PD43EF",
+    "lineageId": "WSNEgMeSRq-lG1uMlsJwsA",
+    "status": "SECURITY_REVIEW"
+  },
+  "name": "vCloudDirector_Organizations",
+  "collectionInterval": "5m",
+  "dataSourceType": 1,
+  "group": "vCloud Director",
+  "headers": {
+    "cache-control": "no-cache, no-store",
+    "content-disposition": "attachment; filename=\"vCloudDirector_Organizations.json\"",
+    "content-encoding": "gzip",
+    "content-type": "application/json",
+    "date": "Wed, 25 Sep 2024 12:47:44 GMT",
+    "server": "LM",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "accept-encoding",
+    "x-content-type-options": "nosniff",
+    "x-server-version": "210-8"
+  }
+}

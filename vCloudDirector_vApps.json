@@ -1,0 +1,92 @@
+{
+  "collectionMethod": "script",
+  "datapoints": [
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "threshold": "< 604800 1209600 2592000",
+      "interpretExpr": "DeploymentLeaseInSeconds",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "3ghVID84RK6FziHeBZBzdg",
+      "useValue": "output",
+      "min": "1",
+      "name": "DeploymentLeaseInSeconds",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "threshold": "< 2592000 1209600 604800",
+      "interpretExpr": "StorageLeaseInSeconds",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "LCc-0f-pRUekqUbNXK76eQ",
+      "useValue": "output",
+      "min": "1",
+      "name": "StorageLeaseInSeconds",
+      "noData": "Do not trigger an alert"
+    }
+  ],
+  "searchKeywords": "",
+  "displayedAs": "vCloud :: vApps",
+  "description": "",
+  "appliesTo": "hasCategory(\"vCloud\") && REST.user",
+  "activeDiscovery": {
+    "groupExpr": "auto.vcloud.vdcname",
+    "deleteInactiveInstances": false,
+    "groupMethod": "ilp",
+    "discoveryMethod": "ad_script",
+    "autoDeleteInstances": true,
+    "disableDiscoveredInstances": false,
+    "filters": [],
+    "params": {
+      "type": "groovy",
+      "content": "import com.santaba.agent.groovyapi.http.*;\nimport javax.xml.parsers.*;\nimport com.santaba.agent.util.script.ScriptCache\n\ndef host = hostProps.get(\"system.hostname\");\ndef user = hostProps.get(\"rest.user\");\ndef pass = hostProps.get(\"rest.pass\");\n\ndef cache = ScriptCache.getCache()\ndef key = \"vCloudAuth.ClientSecret\"\ndef token = cache.get(key)\n\nconn = \"https://${host}/api/query?type=adminVApp&amp;format=records&pageSize=128\".toURL().openConnection();\n\nconn.setRequestMethod(\"GET\");\nconn.setRequestProperty(\"x-vcloud-authorization\", \"${token}\");\nconn.setRequestProperty(\"Accept\", \"application/*;version=37.0\");\n\nif(conn.responseCode == 200)\n{\n\ttext = conn.content.text.readLines().tail().join('')\n\t//println(text);\n\n\tdef queryResultRecords = new XmlSlurper().parseText(text)\n\n\tqueryResultRecords.AdminVAppRecord.each { record ->\n\t    def propertyMap = record.attributes()\n\t    def joinedProperties = propertyMap.collect { propName, propValue -> \"auto.vCloud.${propName}=${propValue}\" }.join(\"&\")\n\t    \n\t    def matcher = record.@href =~ /(vapp-[a-f0-9\\-]+)/\n        def vappId = matcher ? matcher[0][1] : null\n        \n\t    println \"${vappId}##${record.@name}##${record.@containerName}####${joinedProperties}\";\n\t}\n}\nelse\n{\n\tprintln(\"${conn.responseCode}: ${conn.responseMessage}\");\n}\n\nreturn 0;"
+    },
+    "discoveryInterval": "0m",
+    "enabled": true,
+    "showDeletedInstanceDays": 0
+  },
+  "collectionAttrs": {
+    "type": "groovy",
+    "content": "import com.santaba.agent.groovyapi.http.*;\nimport javax.xml.parsers.*;\nimport com.santaba.agent.util.script.ScriptCache\n\ndef host = hostProps.get(\"system.hostname\");\ndef user = hostProps.get(\"rest.user\");\ndef pass = hostProps.get(\"rest.pass\");\n\ndef cache = ScriptCache.getCache()\ndef key = \"vCloudAuth.ClientSecret\"\ndef token = cache.get(key)\n\nconn = \"https://${host}/api/vApp/##WILDVALUE##\".toURL().openConnection();\n\nconn.setRequestMethod(\"GET\");\nconn.setRequestProperty(\"x-vcloud-authorization\", \"${token}\");\nconn.setRequestProperty(\"Accept\", \"application/*;version=37.0\");\n\nif(conn.responseCode == 200)\n{\n\ttext = conn.content.text.readLines().tail().join('')\n\t//println(text);\n\n\tdef queryResultRecords = new XmlSlurper().parseText(text)\n\n\tdef DeploymentLeaseInSeconds = queryResultRecords.LeaseSettingsSection.DeploymentLeaseInSeconds\n\tdef StorageLeaseInSeconds = queryResultRecords.LeaseSettingsSection.StorageLeaseInSeconds\n\t\n\tprintln(\"DeploymentLeaseInSeconds=${DeploymentLeaseInSeconds}\")\n\tprintln(\"StorageLeaseInSeconds=${StorageLeaseInSeconds}\")\n}\nelse\n{\n\tprintln(\"${conn.responseCode}: ${conn.responseMessage}\");\n}\n\nreturn 0;"
+  },
+  "type": 0,
+  "technicalNotes": "",
+  "useWildValueAsUniqueIdentifier": false,
+  "version": 1725548887,
+  "registryMetadata": {
+    "currentUuid": "wFZB0iNURJWQAKSq0000aA",
+    "originalUuid": "wFZB0iNURJWQAKSq0000aA",
+    "locatorId": "",
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "registryVersion": "1.0.0",
+    "checksum": "85f697232f7c8ea8d04704651ad67cab",
+    "namespace": "",
+    "registryId": ""
+  },
+  "multiInstance": true,
+  "name": "vCloudDirector_vApps",
+  "collectionInterval": "5m",
+  "dataSourceType": 1,
+  "group": "vCloud Director",
+  "headers": {
+    "cache-control": "no-cache, no-store",
+    "content-disposition": "attachment; filename=\"vCloudDirector_vApps.json\"",
+    "content-encoding": "gzip",
+    "content-type": "application/json",
+    "date": "Wed, 25 Sep 2024 12:47:59 GMT",
+    "server": "LM",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "accept-encoding",
+    "x-content-type-options": "nosniff",
+    "x-server-version": "210-8"
+  }
+}

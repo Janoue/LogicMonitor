@@ -1,0 +1,87 @@
+{
+  "collectionMethod": "script",
+  "datapoints": [
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "interpretExpr": "TokenCached",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "WKpyKzW9TrSi9iV6NMAx2g",
+      "useValue": "output",
+      "min": "",
+      "name": "TokenCached",
+      "noData": "Do not trigger an alert"
+    },
+    {
+      "max": "",
+      "triggerInterval": 0,
+      "dataType": 7,
+      "maxDigits": 4,
+      "interpretMethod": "namevalue",
+      "interpretExpr": "TokenObtained",
+      "type": "gauge",
+      "clearInterval": 0,
+      "originId": "tAW2MrlxRkK-B85TR9mhGA",
+      "useValue": "output",
+      "min": "",
+      "name": "TokenObtained",
+      "noData": "Do not trigger an alert"
+    }
+  ],
+  "searchKeywords": "",
+  "displayedAs": "vCloud :: BearerToken",
+  "description": "Uses REST.user and REST.pass to authenticate and cache the bearer token for use in the other vCloud scripts.",
+  "appliesTo": "hasCategory(\"vCloud\") && REST.user",
+  "collectionAttrs": {
+    "type": "groovy",
+    "content": "import com.santaba.agent.groovyapi.http.*;\nimport javax.xml.parsers.*;\nimport com.santaba.agent.util.script.ScriptCache\n\ndef host = hostProps.get(\"system.hostname\");\ndef user = hostProps.get(\"rest.user\");\ndef pass = hostProps.get(\"rest.pass\");\n\ndef cache = ScriptCache.getCache()\ndef newToken = false;\ndef key = \"vCloudAuth.ClientSecret\"\ndef token = cache.get(key)\n\nif (!token) {\n    def addr = \"https://${host}/api/sessions\";\n    def authString = \"${user}:${pass}\".getBytes().encodeBase64().toString();\n    def conn = addr.toURL().openConnection();\n    \n    conn.setRequestMethod(\"POST\");\n    conn.setRequestProperty(\"Authorization\", \"Basic ${authString}\");\n    conn.setRequestProperty(\"Accept\", \"application/*+xml;version=37.0\");\n     \n    if(conn.responseCode == 200)\n    {\n    \ttoken = conn.getHeaderField(\"x-vcloud-authorization\");\n    \tcache.set(key, token)\n        newToken = true\n    }\n    else\n    {\n    \tprintln(\"${conn.responseCode}: ${conn.responseMessage}\");\n    }\n}\n\nprintln \"TokenCached=${token ? 1 : 0}\"\nprintln \"TokenObtained=${newToken ? 1 : 0}\"\n\nreturn 0;"
+  },
+  "type": 0,
+  "technicalNotes": "",
+  "useWildValueAsUniqueIdentifier": false,
+  "version": 1724095985,
+  "registryMetadata": {
+    "currentUuid": "7rm2WASVQ2-FTRi-jQAAvw",
+    "originalUuid": "7rm2WASVQ2-FTRi-jQAAvw",
+    "locatorId": "",
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "registryVersion": "1.0.0",
+    "checksum": "014c3767a6fcc8fde99a3c8dfa6917ce",
+    "namespace": "",
+    "registryId": ""
+  },
+  "multiInstance": false,
+  "integrationMetadata": {
+    "publishedAtMS": 1724096051293,
+    "authorCompanyUuid": "043d42a3-246c-436f-8500-de1e9f7979e8",
+    "namespace": "nextdimension",
+    "registryVersion": "1.0.0",
+    "name": "",
+    "checksum": "014c3767a6fcc8fde99a3c8dfa6917ce",
+    "registryId": "a4cc7029-d010-4a50-a7c7-b5ef4240bbd9",
+    "isPrivate": false,
+    "locator": "96HN3T",
+    "lineageId": "7rm2WASVQ2-FTRi-jQAAvw",
+    "status": "SECURITY_REVIEW"
+  },
+  "name": "vCloudDirector_BearerToken",
+  "collectionInterval": "1m",
+  "dataSourceType": 1,
+  "group": "vCloud Director",
+  "headers": {
+    "cache-control": "no-cache, no-store",
+    "content-disposition": "attachment; filename=\"vCloudDirector_BearerToken.json\"",
+    "content-encoding": "gzip",
+    "content-type": "application/json",
+    "date": "Wed, 25 Sep 2024 12:47:28 GMT",
+    "server": "LM",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "accept-encoding",
+    "x-content-type-options": "nosniff",
+    "x-server-version": "210-8"
+  }
+}
